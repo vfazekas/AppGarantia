@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pie Chart Example with Highcharts</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Add styles to control the size and spacing of the canvas */
+    .chart-container {
+      display: flex;
+      justify-content: space-between; /* Automatically space charts evenly */
+    }
+
+    canvas.chart {
+      width: 400px !important;
+      height: 400px !important;
+    }
+  </style>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+</head>
+<body>
+  
+  <a class="nav-link" href="/menu"> ↩ Menu</a>
+   
+  <div class="container mt-2">
+    <h3 class="text-center">Dashboard Garantia <%= user.Filial  %></h3>
+
+    
+
+    <form id="filterForm" class="mb-3">
+      <div class="form-row">
+        <div class="col-md-4">
+          <label for="addFilial">Filial:</label>
+          <select id="addFilial" name="addFilial" class="form-control" required>
+            <option value="none">Select a Filial</option>
+            <option value="RECIFE">RECIFE</option>
+            <option value="OLINDA">OLINDA</option>
+            <option value="PIEDADE">PIEDADE</option>
+            <option value="JOÃO PESSOA">JOÃO PESSOA</option>
+            <option value="HOLANDESES">HOLANDESES</option>
+            <option value="RETIRO">RETIRO</option>
+            <option value="FEIRA DE SANTANA">FEIRA DE SANTANA</option>
+            <option value="BEQUIMÃO">BEQUIMÃO</option>
+            <option value="MANAUS">MANAUS</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="startDate">Start Date:</label>
+          <input type="date" id="startDate" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label for="endDate">End Date:</label>
+          <input type="date" id="endDate" class="form-control">
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary mt-3" onclick="applyDateFilter()">Filtrar</button>
+    </form>
+
+    <div class="chart-container">
+      <div id="container1" style="width: 500px; height: 500px; display: inline-block;"></div>
+      <div id="container2" style="width: 500px; height: 500px; display: inline-block;" onclick="loadBarChart(event)"></div>
+    </div>
+
+    <div class="chart-container">
+      <div id="barContainer1" style="width: 100%; height: 500px; display: none;"></div>
+    </div>
+    
+    <div class="chart-container">
+      <div id="barContainer2" style="width: 100%; height: 500px; display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+
+    function applyDateFilter() {
+      const filial = document.getElementById('addFilial').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+
+      // Make an API call using fetch
+      fetch(`/filterdash/data?filial=${filial}&startDate=${startDate}&endDate=${endDate}`)
+        .then(response => response.json())
+        .then(data => {
+          // Convert data to Highcharts format
+          const chartData1 = Object.entries(data.categoryCounts).map(([name, quantity]) => ({ name, y: quantity }));
+          const chartData2 = Object.entries(data.consultorCounts).map(([name, quantity]) => ({ name, y: quantity }));
+          
+          // Update the chart series data
+          updateChart(chartData1, chartData2);
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+
+    function updateChart(data1, data2) {
+      const filial = document.getElementById('addFilial').value;
+      // Assuming your Highcharts instances are stored in variables chart1 and chart2
+      chart1.series[0].setData(data1);
+      chart2.series[0].setData(data2);
+      chart1.setTitle({ text: `Categoria  ${filial}` });
+      chart2.setTitle({ text: `Consultor  ${filial}` });
+    }
+
+    // Initial chart setup (similar to your current code)
+    const dataFromServer = JSON.parse('<%- consultCategStringfy %>');
+
+    const data1 = Object.entries(dataFromServer.categoryCounts).map(([name, quantity]) => ({ name, y: quantity }));
+    const data2 = Object.entries(dataFromServer.consultorCounts).map(([name, quantity]) => ({ name, y: quantity }));
+
+    const chart1 = Highcharts.chart('container1', {
+      chart: {
+        type: 'pie'
+      },
+      title: {
+        text: `Categoria ${'<%= user.Filial %>'}`
+      },
+      tooltip: {
+        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+      },
+      plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: true,
+                format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+            }
+        }
+    },
+      series: [{
+        name: 'Categoria',
+        data: data1
+      }]
+    });
+
+    const chart2 = Highcharts.chart('container2', {
+      chart: {
+        type: 'pie'
+      },
+      title: {
+        text: `Consultor ${'<%= user.Filial %>'}`
+      },
+      plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: true,
+                format: '<b>{point.name}</b>: {point.y}'
+            }
+        }
+    },
+      
+      series: [{
+        name: 'Consultor',
+        data:  data2
+      }]
+    });
+
+    document.getElementById('container2').addEventListener('click', loadBarChart);
+       //  load  bar chart
+       function loadBarChart(event) {
+  const filial = document.getElementById('addFilial').value;
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+
+  // Check if event is provided (it might be undefined)
+  if (event) {
+    const clickedSliceName = event.point.name;
+
+    // Make an API call using fetch
+    fetch(`/getBarChartData?consultor=${clickedSliceName}&filial=${filial}&startDate=${startDate}&endDate=${endDate}`)
+      .then(response => response.json())
+      .then(barChartData => {
+        // Convert data to Highcharts format
+        const barDataObs = Object.entries(barChartData.barchartCountsObs).map(([category, value]) => ({ name: category, y: value }));
+        const barDataCateg = Object.entries(barChartData.barchartCountsCateg).map(([category, value]) => ({ name: category, y: value }));
+
+
+        // Update and show the bar chart
+        updateBarChart('barContainer2', barDataObs, `Obs. ${clickedSliceName}`);
+        updateBarChart('barContainer1', barDataCateg, `Categoria ${clickedSliceName}`);
+        document.getElementById('barContainer1').style.display = 'block';
+        document.getElementById('barContainer2').style.display = 'block';
+      })
+      .catch(error => console.error('Error fetching bar chart data:', error));
+  }
+}
+
+    function updateBarChart(containerId, barData, chartTitle) {
+    Highcharts.chart(containerId, {
+      chart: {
+        type: 'column'
+      },
+      title: {
+        text: chartTitle
+      },
+      xAxis: {
+        type: 'category'
+      },
+      yAxis: {
+        title: {
+          text: 'Count'
+        }
+      },
+      series: [{
+        name: 'inconsistência',
+        data: barData
+      }]
+    });
+  }
+
+
+  </script>
+</body>
+</html>
