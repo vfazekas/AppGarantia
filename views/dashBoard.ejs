@@ -208,6 +208,26 @@
     });
   }
 
+  const inicio = document.getElementById('startDate');
+  const final = document.getElementById('endDate');
+  const fili = document.getElementById('addFilial');
+
+
+  fili.value = '<%= user.Filial %>';
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1; // JavaScript months are 0-based (0 = January)
+  const day = today.getDate(); 
+
+  if (day < 10) {
+    final.value = `${year}-0${month}-0${day}`
+  } else final.value = `${year}-0${month}-${day}`
+
+
+  inicio.value = `${year}-0${month}-01`;
+  
+
 
   </script>
 </body>
