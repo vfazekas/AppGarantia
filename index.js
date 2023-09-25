@@ -132,15 +132,16 @@ app.post('/consultor', async (req, res) => {
  const categoria = req.body.categoria;
  const erro = req.body.erro;
  const filial = req.session.user.Filial;
+ const obs = req.body.obs;
 
 
  // Write row(s) to spreadsheet
  await googleSheets.spreadsheets.values.append({
   spreadsheetId,
-  range: 'DBConsultor!A2:F',
+  range: 'DBConsultor!A2:G',
   valueInputOption: "USER_ENTERED",
   resource: {
-   values: [[data, os, consultor, categoria, erro, filial]],
+   values: [[data, os, consultor, categoria, erro, filial, obs]],
   },
  });
  res.redirect("/consultor?msg=item enviado com sucesso!!");
